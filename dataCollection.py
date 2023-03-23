@@ -23,21 +23,26 @@ while True:
         imgWhite = np.ones((imgSize, imgSize, 3), np.uint8) * 255
         imgCrop = img[y - offset:y + h + offset, x - offset:x + w + offset]
 
-        imgCropShape = imgCrop.shape
 
-        aspectRatio = h / w
+        imgCropShape = imgCrop.shape
+        imgCropH,imgCropW,_ = imgCrop.shape
+        print("share of imagecropeshare",imgCropH,imgCropW)
+
+        if imgCropH==0 or imgCropW ==0 : continue
+
+        aspectRatio = imgCropH / imgCropW
 
         if aspectRatio > 1:
-            k = imgSize / h
-            wCal = math.ceil(k * w)
+            k = imgSize / imgCropH
+            wCal = math.ceil(k * imgCropW)
             imgResize = cv2.resize(imgCrop, (wCal, imgSize))
             imgResizeShape = imgResize.shape
             wGap = math.ceil((imgSize - wCal) / 2)
             imgWhite[:, wGap:wCal + wGap] = imgResize
 
         else:
-            k = imgSize / w
-            hCal = math.ceil(k * h)
+            k = imgSize / imgCropW
+            hCal = math.ceil(k * imgCropH)
             imgResize = cv2.resize(imgCrop, (imgSize, hCal))
             imgResizeShape = imgResize.shape
             hGap = math.ceil((imgSize - hCal) / 2)
