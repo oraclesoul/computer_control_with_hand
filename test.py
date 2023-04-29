@@ -25,9 +25,9 @@ pTime = 0
 plocX, plocY = 0, 0
 clocX, clocY = 0, 0
 
-labels = ["A","B","C"]
+labels = ["A","B","C","ExitShow","Next","Previous","StartSlideShow"]
 numberOfClasses = labels.count
-timeCounter = [time.time(),time.time(),time.time()]
+timeCounter = [time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time()]
 # for i in range(numberOfClasses):
 #      timeCounter.append(time.time())
 
@@ -83,9 +83,17 @@ while 1:
                     elif index==0:
                         pyautogui.hotkey('alt','tab')
                         print("index 0")
-                    else:
+                    elif index==1:
                         pyautogui.hotkey('ctrl','win','o')
                         print("index 1")
+                    elif index==3:
+                         pyautogui.hotkey('esc')
+                    elif index==4:
+                         pyautogui.hotkey('right')
+                    elif index==5:
+                         pyautogui.hotkey('left')
+                    elif index==6:
+                         pyautogui.hotkey('ctrl','f5')
                     timeCounter[index] = time.time()
 
                 cv2.imshow("Image", imgOutput)
