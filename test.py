@@ -25,13 +25,13 @@ pTime = 0
 plocX, plocY = 0, 0
 clocX, clocY = 0, 0
 
-labels = ["A","B","C","ExitShow","Next","Previous","StartSlideShow"]
+labels = ["Show_On_screen_keyboard","Show_desktop","backspace","Switch_App","StartSlideShow","Next","EndShow","Previous"]
 numberOfClasses = labels.count
-timeCounter = [time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time()]
-# for i in range(numberOfClasses):
-#      timeCounter.append(time.time())
+timeCounter = [time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time()]
+
 
 leftClickTime = time.time()
+
 while 1:
     success, img = cap.read()
     hands, img = detector.findHands(img)
@@ -74,26 +74,26 @@ while 1:
                 cv2.putText(imgOutput, labels[index], (x, y -26), cv2.FONT_HERSHEY_COMPLEX, 1.7, (255, 255, 255), 2)
                 cv2.rectangle(imgOutput, (x-offset, y-offset),
                             (x + w+offset, y + h+offset), (255, 0, 255), 4)
-                if time.time()-timeCounter[index]>0.5:
-                    if index==2:
-                        pyautogui.keyDown('winleft')
-                        pyautogui.press('d')
-                        pyautogui.keyUp('winleft')
-                        print("index 2")
-                    elif index==0:
-                        pyautogui.hotkey('alt','tab')
-                        print("index 0")
-                    elif index==1:
-                        pyautogui.hotkey('ctrl','win','o')
-                        print("index 1")
-                    elif index==3:
-                         pyautogui.hotkey('esc')
-                    elif index==4:
-                         pyautogui.hotkey('right')
-                    elif index==5:
-                         pyautogui.hotkey('left')
-                    elif index==6:
-                         pyautogui.hotkey('ctrl','f5')
+                if time.time()-timeCounter[index]>1.5:
+                    match index:
+                         case 0:
+                              pyautogui.hotkey('ctrl','win','o')
+                         case 1:
+                              pyautogui.keyDown('winleft')
+                              pyautogui.press('d')
+                              pyautogui.keyUp('winleft')
+                         case 3:
+                              pyautogui.hotkey('alt','tab')
+                         case 4:
+                              pyautogui.hotkey('ctrl','f5')
+                         case 5:
+                              pyautogui.hotkey('right')
+                         case 6:
+                              pyautogui.hotkey('esc')
+                         case 7:
+                              pyautogui.hotkey('left')
+                         case _:
+                              ()
                     timeCounter[index] = time.time()
 
                 cv2.imshow("Image", imgOutput)

@@ -10,7 +10,7 @@ detector = HandDetector(maxHands=1)
 offset = 20
 imgSize = 300
 
-folder = "Images/ExitShow"
+folder = "Images/G4"
 counter = 0
 
 while True:
@@ -26,7 +26,7 @@ while True:
 
         imgCropShape = imgCrop.shape
         imgCropH,imgCropW,_ = imgCrop.shape
-        print("share of imagecropeshare",imgCropH,imgCropW)
+        # print("share of imagecropeshare",imgCropH,imgCropW)
 
         if imgCropH==0 or imgCropW ==0 : continue
 
