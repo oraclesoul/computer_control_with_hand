@@ -15,19 +15,22 @@ classifier = Classifier("Model/keras_model.h5", "Model/labels.txt")
 wCam, hCam = 640, 480
 frameR = 100 # Frame Reduction
 smoothening = 10
+wScr, hScr = pyautogui.size()
+# print(wScr, hScr)
+offset = 20
+imgSize = 300
 #########################
 
 pTime = 0
 plocX, plocY = 0, 0
 clocX, clocY = 0, 0
 
-wScr, hScr = pyautogui.size()
-print(wScr, hScr)
+labels = ["Show_On_screen_keyboard","Show_desktop","backspace","Switch_App","StartSlideShow","Next","EndShow","Previous"]
+numberOfClasses = labels.count
+timeCounter = [time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time()]
 
-offset = 20
-imgSize = 300
 
-labels = ["A","B","C"]
+leftClickTime = time.time()
 
 while 1:
     success, img = cap.read()
@@ -71,27 +74,37 @@ while 1:
                 cv2.putText(imgOutput, labels[index], (x, y -26), cv2.FONT_HERSHEY_COMPLEX, 1.7, (255, 255, 255), 2)
                 cv2.rectangle(imgOutput, (x-offset, y-offset),
                             (x + w+offset, y + h+offset), (255, 0, 255), 4)
-                
-                if index==2:
-                    pyautogui.keyDown('winleft')
-                    pyautogui.press('d')
-                    pyautogui.keyUp('winleft')
-                    print("index 2")
-                elif index==0:
-                    pyautogui.leftClick()
-                    print("index 0")
-                else:
-                    pyautogui.hotkey('ctrl','win','o')
-                    print("index 1")
+                if time.time()-timeCounter[index]>1.5:
+                    match index:
+                         case 0:
+                              pyautogui.hotkey('ctrl','win','o')
+                         case 1:
+                              pyautogui.keyDown('winleft')
+                              pyautogui.press('d')
+                              pyautogui.keyUp('winleft')
+                         case 3:
+                              pyautogui.hotkey('alt','tab')
+                         case 4:
+                              pyautogui.hotkey('ctrl','f5')
+                         case 5:
+                              pyautogui.hotkey('right')
+                         case 6:
+                              pyautogui.hotkey('esc')
+                         case 7:
+                              pyautogui.hotkey('left')
+                         case _:
+                              ()
+                    timeCounter[index] = time.time()
+
                 cv2.imshow("Image", imgOutput)
             else:
                 print("Right Hand")
                 lmList = hand['lmList']
-                print(lmList[8])
+                # print(lmList[8])
                 if len(lmList) != 0:
                     x1, y1,_ = lmList[8][0:]
                     x2, y2,_ = lmList[12][0:]
-                    print(x1, y1, x2, y2)
+                    # print(x1, y1, x2, y2)
                 
                 # 3. Check which fingers are up
                 fingers = detector.fingersUp(hand)
@@ -104,7 +117,7 @@ while 1:
                     x3 = np.interp(x1, (frameR, wCam - frameR), (0, wScr))
                     y3 = np.interp(y1, (frameR, hCam - frameR), (0, hScr))
                     # 6. Smoothen Values
-                    print("x3,y3",x3,y3)
+                    
                     clocX = plocX + (x3 - plocX) / smoothening
                     clocY = plocY + (y3 - plocY) / smoothening
                     
@@ -115,7 +128,9 @@ while 1:
                     
                 # 8. Both Index and middle fingers are up : Clicking Mode
                 if fingers[1] == 1 and fingers[2] == 1:
-                        pyautogui.click()
+                        if time.time() - leftClickTime > 0.2:
+                            pyautogui.click()
+                            leftClickTime = time.time()
                 
                 # 11. Frame Rate
                 cTime = time.time()
@@ -123,7 +138,8 @@ while 1:
                 pTime = cTime
                 cv2.putText(img, str(int(fps)), (20, 50), cv2.FONT_HERSHEY_PLAIN, 3,
                 (255, 0, 0), 3)
-                cv2.imshow("Mouse",img)    
+                cv2.imshow("Mouse",img)
+ 
     q = cv2.waitKey(1)
     if(q == ord('q')):
         break
