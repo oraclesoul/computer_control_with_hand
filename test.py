@@ -25,7 +25,7 @@ pTime = 0
 plocX, plocY = 0, 0
 clocX, clocY = 0, 0
 
-labels = ["Show_On_screen_keyboard","Show_desktop","backspace","Switch_App","StartSlideShow","Next","EndShow","Previous"]
+labels = ["backspace","Show_desktop","Show_On_screen_keyboard","Switch_App","StartSlideShow","Next","EndShow","Previous"]
 numberOfClasses = labels.count
 timeCounter = [time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time()]
 
@@ -76,16 +76,16 @@ while 1:
                             (x + w+offset, y + h+offset), (255, 0, 255), 4)
                 if time.time()-timeCounter[index]>1.5:
                     match index:
-                         case 0:
-                              pyautogui.hotkey('ctrl','win','o')
                          case 1:
                               pyautogui.keyDown('winleft')
                               pyautogui.press('d')
                               pyautogui.keyUp('winleft')
+                         case 2:
+                              pyautogui.hotkey('ctrl','win','o')                              
                          case 3:
                               pyautogui.hotkey('alt','tab')
                          case 4:
-                              pyautogui.hotkey('ctrl','f5')
+                              pyautogui.hotkey('f5')
                          case 5:
                               pyautogui.hotkey('right')
                          case 6:
