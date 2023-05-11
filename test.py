@@ -26,10 +26,8 @@ plocX, plocY = 0, 0
 clocX, clocY = 0, 0
 
 labels = ["backspace","Show_desktop","Show_On_screen_keyboard","Switch_App","StartSlideShow","Next","EndShow","Previous"]
-numberOfClasses = labels.count
-timeCounter = [time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time(),time.time()]
 
-
+gestureTime = time.time()
 leftClickTime = time.time()
 
 while 1:
@@ -74,7 +72,7 @@ while 1:
                 cv2.putText(imgOutput, labels[index], (x, y -26), cv2.FONT_HERSHEY_COMPLEX, 1.7, (255, 255, 255), 2)
                 cv2.rectangle(imgOutput, (x-offset, y-offset),
                             (x + w+offset, y + h+offset), (255, 0, 255), 4)
-                if time.time()-timeCounter[index]>1.5:
+                if time.time()-gestureTime>1.5:
                     match index:
                          case 1:
                               pyautogui.keyDown('winleft')
@@ -94,7 +92,7 @@ while 1:
                               pyautogui.hotkey('left')
                          case _:
                               ()
-                    timeCounter[index] = time.time()
+                    gestureTime = time.time()
 
                 cv2.imshow("Image", imgOutput)
             else:
