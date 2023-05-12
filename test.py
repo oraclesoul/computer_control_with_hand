@@ -7,23 +7,22 @@ import numpy as np
 import math
 import pyautogui
 
-cap = cv2.VideoCapture(0)
-detector = HandDetector(maxHands=1)
+video = cv2.VideoCapture(0)
+handDetector = HandDetector(maxHands=1)
 classifier = Classifier("Model/keras_model.h5", "Model/labels.txt")
 
 ##########################
-wCam, hCam = 640, 480
-frameR = 100 # Frame Reduction
-smoothening = 10
-wScr, hScr = pyautogui.size()
-# print(wScr, hScr)
-offset = 20
-imgSize = 300
+cam_width, cam_height = 640, 480
+frame_rate = 100 # Frame Reduction
+smoothening_value = 10
+screen_width, screen_height = pyautogui.size()
+# print(screen_width, screen_height)
+margin = 20
+desired_imageSize = 300
 #########################
 
-pTime = 0
-plocX, plocY = 0, 0
-clocX, clocY = 0, 0
+prev_locX, prev_locY = 0, 0
+curr_locX, curr_locY = 0, 0
 
 labels = ["backspace","Show_desktop","Show_On_screen_keyboard","Switch_App","StartSlideShow","Next","EndShow","Previous"]
 
@@ -31,47 +30,47 @@ gestureTime = time.time()
 leftClickTime = time.time()
 
 while 1:
-    success, img = cap.read()
-    hands, img = detector.findHands(img)
+    _, inputImage = video.read()
+    hands, inputImage = handDetector.findHands(inputImage)
     if hands:
             hand = hands[0]
             if hand['type'] == "Left":
                 x, y, w, h = hand['bbox']
-                imgOutput = img.copy()
-                imgOutputHeight,imgOutputWidth,_ = imgOutput.shape
-                imgWhite = np.ones((imgSize, imgSize, 3), np.uint8) * 255
-                imgCrop = img[y - offset:y + h + offset, x - offset:x + w + offset]
+                output_image = inputImage.copy()
+                imgOutputHeight,imgOutputWidth,_ = output_image.shape
+                finalDataSetImage = np.ones((desired_imageSize, desired_imageSize, 3), np.uint8) * 255
+                croppedInputImage = inputImage[y - margin:y + h + margin, x - margin:x + w + margin]
 
-                imgCropShape = imgCrop.shape
-                imgCropH,imgCropW,_ = imgCrop.shape
+                
+                croppedInputImageH,croppedInputImageW,_ = croppedInputImage.shape
 
-                if imgCropH==0 or imgCropW ==0 : continue
+                if croppedInputImageH==0 or croppedInputImageW ==0 : continue
 
-                aspectRatio = imgCropH / imgCropW
+                H_W_Ratio = croppedInputImageH / croppedInputImageW
 
-                if aspectRatio > 1:
-                    k = imgSize / imgCropH
-                    wCal = math.ceil(k * imgCropW)
-                    imgResize = cv2.resize(imgCrop, (wCal, imgSize))
-                    imgResizeShape = imgResize.shape
-                    wGap = math.ceil((imgSize - wCal) / 2)
-                    imgWhite[:, wGap:wCal + wGap] = imgResize
-                    prediction, index = classifier.getPrediction(imgWhite, draw=False)
+                if H_W_Ratio > 1:
+                    k = desired_imageSize / croppedInputImageH
+                    calculated_width = math.ceil(k * croppedInputImageW)
+                    resizedImage = cv2.resize(croppedInputImage, (calculated_width, desired_imageSize))
+                    
+                    wGap = math.ceil((desired_imageSize - calculated_width) / 2)
+                    finalDataSetImage[:, wGap:calculated_width + wGap] = resizedImage
+                    prediction, index = classifier.getPrediction(finalDataSetImage, draw=False)
 
                 else:
-                    k = imgSize / imgCropW
-                    hCal = math.ceil(k * imgCropH)
-                    imgResize = cv2.resize(imgCrop, (imgSize, hCal))
-                    imgResizeShape = imgResize.shape
-                    hGap = math.ceil((imgSize - hCal) / 2)
-                    imgWhite[hGap:hCal + hGap, :] = imgResize
-                    prediction, index = classifier.getPrediction(imgWhite, draw=False)
+                    k = desired_imageSize / croppedInputImageW
+                    calculated_height = math.ceil(k * croppedInputImageH)
+                    resizedImage = cv2.resize(croppedInputImage, (desired_imageSize, calculated_height))
+                    
+                    hGap = math.ceil((desired_imageSize - calculated_height) / 2)
+                    finalDataSetImage[hGap:calculated_height + hGap, :] = resizedImage
+                    prediction, index = classifier.getPrediction(finalDataSetImage, draw=False)
 
-                cv2.rectangle(imgOutput, (x - offset, y - offset-50),
-                            (x - offset+90, y - offset-50+50), (255, 0, 255), cv2.FILLED)
-                cv2.putText(imgOutput, labels[index], (x, y -26), cv2.FONT_HERSHEY_COMPLEX, 1.7, (255, 255, 255), 2)
-                cv2.rectangle(imgOutput, (x-offset, y-offset),
-                            (x + w+offset, y + h+offset), (255, 0, 255), 4)
+                cv2.rectangle(output_image, (x - margin, y - margin-50),
+                            (x - margin+90, y - margin-50+50), (255, 0, 255), cv2.FILLED)
+                cv2.putText(output_image, labels[index], (x, y -26), cv2.FONT_HERSHEY_COMPLEX, 1.7, (255, 255, 255), 2)
+                cv2.rectangle(output_image, (x-margin, y-margin),
+                            (x + w+margin, y + h+margin), (255, 0, 255), 4)
                 if time.time()-gestureTime>1.5:
                     match index:
                          case 1:
@@ -94,7 +93,7 @@ while 1:
                               ()
                     gestureTime = time.time()
 
-                cv2.imshow("Image", imgOutput)
+                cv2.imshow("Image", output_image)
             else:
                 print("Right Hand")
                 lmList = hand['lmList']
@@ -102,41 +101,35 @@ while 1:
                 if len(lmList) != 0:
                     x1, y1,_ = lmList[8][0:]
                     x2, y2,_ = lmList[12][0:]
-                    # print(x1, y1, x2, y2)
+                    
                 
-                # 3. Check which fingers are up
-                fingers = detector.fingersUp(hand)
-                # print(fingers)
-                cv2.rectangle(img, (frameR, frameR), (wCam - frameR, hCam - frameR),
+                # 3. Check which rightHandFingers are up
+                rightHandFingers = handDetector.fingersUp(hand)
+                # print(rightHandFingers)
+                cv2.rectangle(inputImage, (frame_rate, frame_rate), (cam_width - frame_rate, cam_height - frame_rate),
                 (255, 0, 255), 2)
                 # 4. Only Index Finger : Moving Mode
-                if fingers[1] == 1 and fingers[2] == 0:
+                if rightHandFingers[1] == 1 and rightHandFingers[2] == 0:
                     # 5. Convert Coordinates
-                    x3 = np.interp(x1, (frameR, wCam - frameR), (0, wScr))
-                    y3 = np.interp(y1, (frameR, hCam - frameR), (0, hScr))
+                    x3 = np.interp(x1, (frame_rate, cam_width - frame_rate), (0, screen_width))
+                    y3 = np.interp(y1, (frame_rate, cam_height - frame_rate), (0, screen_height))
                     # 6. Smoothen Values
                     
-                    clocX = plocX + (x3 - plocX) / smoothening
-                    clocY = plocY + (y3 - plocY) / smoothening
+                    curr_locX = prev_locX + (x3 - prev_locX) / smoothening_value
+                    curr_locY = prev_locY + (y3 - prev_locY) / smoothening_value
                     
                     # 7. Move Mouse
-                    pyautogui.moveTo(wScr-clocX, clocY)
-                    cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
-                    plocX, plocY = clocX, clocY
+                    pyautogui.moveTo(screen_width-curr_locX, curr_locY)
+                    cv2.circle(inputImage, (x1, y1), 15, (255, 0, 255), cv2.FILLED)
+                    prev_locX, prev_locY = curr_locX, curr_locY
                     
-                # 8. Both Index and middle fingers are up : Clicking Mode
-                if fingers[1] == 1 and fingers[2] == 1:
+                # 8. Both Index and middle rightHandFingers are up : Clicking Mode
+                if rightHandFingers[1] == 1 and rightHandFingers[2] == 1:
                         if time.time() - leftClickTime > 0.2:
                             pyautogui.click()
                             leftClickTime = time.time()
                 
-                # 11. Frame Rate
-                cTime = time.time()
-                fps = 1 / (cTime - pTime)
-                pTime = cTime
-                cv2.putText(img, str(int(fps)), (20, 50), cv2.FONT_HERSHEY_PLAIN, 3,
-                (255, 0, 0), 3)
-                cv2.imshow("Mouse",img)
+                cv2.imshow("Mouse",inputImage)
  
     q = cv2.waitKey(1)
     if(q == ord('q')):

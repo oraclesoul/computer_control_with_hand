@@ -4,56 +4,52 @@ import numpy as np
 import math
 import time
 
-cap = cv2.VideoCapture(0)
-detector = HandDetector(maxHands=1)
+video = cv2.VideoCapture(0)
+handDetector = HandDetector(maxHands=1)
 
-offset = 20
-imgSize = 300
+margin = 20
+desired_imageSize = 300
 
-folder = "Images/G3"
-counter = 0
+dataSet_location = "Images/G3"
+dataSet_count = 0
 
 while True:
-    success, img = cap.read()
-    hands, img = detector.findHands(img)
+    _, inputImage = video.read()
+    hands, inputImage = handDetector.findHands(inputImage)
     if hands:
         hand = hands[0]
         x, y, w, h = hand['bbox']
 
-        imgWhite = np.ones((imgSize, imgSize, 3), np.uint8) * 255
-        imgCrop = img[y - offset:y + h + offset, x - offset:x + w + offset]
+        finalDataSetImage = np.ones((desired_imageSize, desired_imageSize, 3), np.uint8) * 255
+        croppedInputImage = inputImage[y - margin:y + h + margin, x - margin:x + w + margin]
 
+        croppedInputImageH,croppedInputImageW,_ = croppedInputImage.shape
+        
 
-        imgCropShape = imgCrop.shape
-        imgCropH,imgCropW,_ = imgCrop.shape
-        # print("share of imagecropeshare",imgCropH,imgCropW)
+        if croppedInputImageH==0 or croppedInputImageW ==0 : continue
 
-        if imgCropH==0 or imgCropW ==0 : continue
+        H_W_Ratio = croppedInputImageH / croppedInputImageW
 
-        aspectRatio = imgCropH / imgCropW
-
-        if aspectRatio > 1:
-            k = imgSize / imgCropH
-            wCal = math.ceil(k * imgCropW)
-            imgResize = cv2.resize(imgCrop, (wCal, imgSize))
-            imgResizeShape = imgResize.shape
-            wGap = math.ceil((imgSize - wCal) / 2)
-            imgWhite[:, wGap:wCal + wGap] = imgResize
+        if H_W_Ratio > 1:
+            k = desired_imageSize / croppedInputImageH
+            calculated_width = math.ceil(k * croppedInputImageW)
+            resizedImage = cv2.resize(croppedInputImage, (calculated_width, desired_imageSize))
+            wGap = math.ceil((desired_imageSize - calculated_width) / 2)
+            finalDataSetImage[:, wGap:calculated_width + wGap] = resizedImage
 
         else:
-            k = imgSize / imgCropW
-            hCal = math.ceil(k * imgCropH)
-            imgResize = cv2.resize(imgCrop, (imgSize, hCal))
-            imgResizeShape = imgResize.shape
-            hGap = math.ceil((imgSize - hCal) / 2)
-            imgWhite[hGap:hCal + hGap, :] = imgResize
+            k = desired_imageSize / croppedInputImageW
+            calculated_height = math.ceil(k * croppedInputImageH)
+            resizedImage = cv2.resize(croppedInputImage, (desired_imageSize, calculated_height))
+            hGap = math.ceil((desired_imageSize - calculated_height) / 2)
+            finalDataSetImage[hGap:calculated_height + hGap, :] = resizedImage
 
-        cv2.imshow("ImageCrop", imgCrop)
-        cv2.imshow("ImageWhite", imgWhite)
+        cv2.imshow("ImageCrop", croppedInputImage)
+        cv2.imshow("ImageWhite", finalDataSetImage)
 
-    cv2.imshow("Image", img)
-    key = cv2.waitKey(1)
-    if key == ord("s"):
-        counter += 1
-        cv2.imwrite(f'{folder}/Image_{time.time()}.jpg',imgWhite)
-        print(counter)
+    cv2.imshow("Image", inputImage)
+    key_pressed = cv2.waitKey(1)
+    if ord("s") == key_pressed:
+        dataSet_count += 1
+        cv2.imwrite(f'{dataSet_location}/Image_{time.time()}.jpg',finalDataSetImage)
+        print(dataSet_count)
